@@ -21,16 +21,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 11076708
-          accept-android-sdk-licenses: true
-          packages: 'platform-tools, platforms;android-35, build-tools;35.0.0'
-        with:
-          cmdline-tools-version: 11076708
-          accept-android-sdk-licenses: true
-          packages: 'platform-tools, platforms;android-35, build-tools;35.0.0'
+      - name: Install Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -43,9 +38,7 @@ jobs:
 
       - name: Find Android project
         run: |
-          PROJECT_FILE=$(find extracted -type f \
-            \( -name settings.gradle -o -name settings.gradle.kts \) \
-            | head -n 1)
+          PROJECT_FILE=$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)
           if [ -z "$PROJECT_FILE" ]; then
             echo "File settings.gradle tidak ditemukan"
             exit 1
