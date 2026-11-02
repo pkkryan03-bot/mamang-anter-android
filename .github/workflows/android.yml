@@ -44,6 +44,28 @@ jobs:
             exit 1
           fi
           echo "PROJECT_DIR=$(dirname "$PROJECT_FILE")" >> "$GITHUB_ENV"
+      - name: Fix Java Kotlin target
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = list(Path("extracted").rglob("app/build.gradle.kts"))
+          files += list(Path("extracted").rglob("app/build.gradle"))
+
+          for p in files:
+              s = p.read_text()
+              s = s.replace(
+                  "JavaVersion.VERSION_1_8",
+                  "JavaVersion.VERSION_17"
+              )
+              s = s.replace('jvmTarget = "1.8"', 'jvmTarget = "17"')
+              s = s.replace("jvmTarget = '1.8'", "jvmTarget = '17'")
+              p.write_text(s)
+              print("Updated:", p)
+
+          if not files:
+              raise SystemExit("File app/build.gradle tidak ditemukan")
+          PY
 
       - name: Build APK
         run: gradle -p "$PROJECT_DIR" assembleDebug
