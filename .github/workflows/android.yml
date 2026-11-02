@@ -23,6 +23,13 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 11076708
+          accept-android-sdk-licenses: true
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -31,14 +38,25 @@ jobs:
 
       - name: Extract project
         run: |
-          unzip MAMANG_ANTER_XIAOMI_ANDROID13.zip
+          mkdir extracted
+          unzip -q MAMANG_ANTER_XIAOMI_ANDROID13.zip -d extracted
+
+      - name: Find Android project
+        run: |
+          PROJECT_FILE=$(find extracted -type f \
+            \( -name settings.gradle -o -name settings.gradle.kts \) \
+            | head -n 1)
+          if [ -z "$PROJECT_FILE" ]; then
+            echo "File settings.gradle tidak ditemukan"
+            exit 1
+          fi
+          echo "PROJECT_DIR=$(dirname "$PROJECT_FILE")" >> "$GITHUB_ENV"
 
       - name: Build APK
-        run: |
-          gradle -p MamangAnter_Android_Starter assembleDebug
+        run: gradle -p "$PROJECT_DIR" assembleDebug
 
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
           name: MAMANG-ANTER-APK
-          path: MamangAnter_Android_Starter/app/build/outputs/apk/debug/app-debug.apk
+          path: '**/app/build/outputs/apk/debug/*.apk'
